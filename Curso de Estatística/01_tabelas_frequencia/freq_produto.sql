@@ -1,22 +1,47 @@
+--- SELECT * FROM points
+
+/*
+--- Frequencia Absoluta por Produto
+SELECT descProduto,
+    COUNT(idTransacao) AS "Frequencia Absoluta"
+FROM points
+GROUP BY descProduto;
+*/
+
+-- Frequencia Absoluta Acumulada por Produto
 WITH tb_freq_abs AS (
-
     SELECT descProduto,
-        count(idTransacao) AS FreqAbs
-
+        COUNT(idTransacao) AS "Frequencia Absoluta"
     FROM points
     GROUP BY descProduto
-),
-
-tb_freq_abs_cum AS (
-
-    SELECT *,
-            sum(FreqAbs) OVER (ORDER BY descProduto) AS FreqAbsAcum,
-            1.0 * FreqAbs / (SELECT sum(FreqAbs) FROM tb_freq_abs) AS FreqRelativa
-
-    FROM tb_freq_abs
 )
+SELECT descProduto,
+    "Frequencia Absoluta",
+    SUM("Frequencia Absoluta") OVER (ORDER BY descProduto) AS "Frequencia Acumulada"
+FROM tb_freq_abs
+ORDER BY descProduto;
 
-SELECT *,
-       sum(FreqRelativa) OVER (ORDER BY descProduto) AS FreqRelativaAcum
 
-FROM tb_freq_abs_cum
+-- Frequencia Relativa por Produto
+SELECT descProduto,
+    COUNT(idTransacao) AS "Frequencia Absoluta",
+    ROUND(COUNT(idTransacao) * 100.0 / (SELECT COUNT(*) FROM points), 2) AS "Frequencia Relativa (%)"
+FROM points
+GROUP BY descProduto
+ORDER BY COUNT(idTransacao) DESC;
+
+
+-- Frequencia Relativa Acumulada por Produto
+WITH tb_freq AS (
+    SELECT descProduto,
+        COUNT(idTransacao) AS "Frequencia Absoluta",
+        ROUND(COUNT(idTransacao) * 100.0 / (SELECT COUNT(*) FROM points), 2) AS "Frequencia Relativa (%)"
+    FROM points
+    GROUP BY descProduto
+)
+SELECT descProduto,
+    "Frequencia Absoluta",
+    "Frequencia Relativa (%)",
+    ROUND(SUM("Frequencia Relativa (%)") OVER (ORDER BY "Frequencia Absoluta" DESC), 2) AS "Frequencia Relativa Acumulada (%)"
+FROM tb_freq
+ORDER BY "Frequencia Absoluta" DESC;
